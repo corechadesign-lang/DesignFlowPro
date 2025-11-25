@@ -24,25 +24,22 @@ export const Login: React.FC = () => {
 
   const selectedUser = users.find(u => u.id === selectedUserId);
 
+  const adminUser = users.find(u => u.active && u.role === 'ADM');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     if (selectedRole === 'ADM') {
-      if (password !== '123456') {
-        setError('Senha incorreta');
-        return;
-      }
-      const admins = users.filter(u => u.active && u.role === 'ADM');
-      if (admins.length === 0) {
+      if (!adminUser) {
         setError('Nenhum administrador cadastrado');
         return;
       }
       setLoading(true);
-      const success = await login(admins[0].name, password);
+      const success = await login(adminUser.name, password);
       setLoading(false);
       if (!success) {
-        setError('Erro ao entrar');
+        setError('Senha incorreta');
       }
       return;
     }
@@ -193,14 +190,24 @@ export const Login: React.FC = () => {
               </div>
             )}
 
-            {selectedRole === 'ADM' && (
-              <div className="text-center py-4">
-                <div className="w-16 h-16 mx-auto mb-3 bg-brand-100 dark:bg-brand-900/30 rounded-full flex items-center justify-center">
-                  <Shield size={32} className="text-brand-600" />
+            {selectedRole === 'ADM' && adminUser && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Perfil selecionado
+                </label>
+                <div className="relative">
+                  <div className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white">
+                    {adminUser.name}
+                  </div>
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                    <div 
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                      style={{ backgroundColor: getAvatarBg(adminUser) }}
+                    >
+                      {getInitials(adminUser.name)}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Digite a senha de administrador para entrar
-                </p>
               </div>
             )}
 
