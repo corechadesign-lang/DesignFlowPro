@@ -30,10 +30,12 @@ export const AdminDashboard: React.FC = () => {
   const getDateRange = (): { start: number; end: number } => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(today);
+    todayEnd.setHours(23, 59, 59, 999);
     
     switch (dateFilter) {
       case 'hoje':
-        return { start: today.getTime(), end: now.getTime() + 86400000 };
+        return { start: today.getTime(), end: todayEnd.getTime() };
       case 'semana': {
         const dayOfWeek = today.getDay();
         const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -53,13 +55,14 @@ export const AdminDashboard: React.FC = () => {
       case 'custom': {
         if (customStartDate && customEndDate) {
           const start = new Date(customStartDate).getTime();
-          const end = new Date(customEndDate).getTime() + 86400000 - 1;
-          return { start, end };
+          const endDate = new Date(customEndDate);
+          endDate.setHours(23, 59, 59, 999);
+          return { start, end: endDate.getTime() };
         }
-        return { start: today.getTime(), end: now.getTime() };
+        return { start: today.getTime(), end: todayEnd.getTime() };
       }
       default:
-        return { start: today.getTime(), end: now.getTime() };
+        return { start: today.getTime(), end: todayEnd.getTime() };
     }
   };
 
@@ -383,8 +386,8 @@ export const AdminDashboard: React.FC = () => {
                   color: '#fff'
                 }}
                 formatter={(value: number) => [
-                  chartMode.includes('media') ? value.toFixed(1) : value,
-                  chartMode.includes('Points') ? 'Pontos' : 'Artes'
+                  chartMode.startsWith('media') ? value.toFixed(1) : value,
+                  chartMode.endsWith('Points') ? 'Pontos' : 'Artes'
                 ]}
               />
               <Bar 
