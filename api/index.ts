@@ -149,12 +149,24 @@ app.put('/api/users/:id', async (req: Request, res: Response) => {
 });
 
 app.delete('/api/users/:id', async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
-    await pool.query('UPDATE users SET active = false WHERE id = $1', [id]);
+    await client.query('BEGIN');
+    await client.query('DELETE FROM demand_items WHERE demand_id IN (SELECT id FROM demands WHERE user_id = $1)', [id]);
+    await client.query('DELETE FROM work_sessions WHERE user_id = $1', [id]);
+    await client.query('DELETE FROM demands WHERE user_id = $1', [id]);
+    await client.query('DELETE FROM feedbacks WHERE designer_id = $1', [id]);
+    await client.query('DELETE FROM lesson_progress WHERE designer_id = $1', [id]);
+    await client.query('DELETE FROM users WHERE id = $1', [id]);
+    await client.query('COMMIT');
     return res.json({ success: true });
   } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao remover usuário:', error);
     return res.status(500).json({ error: 'Erro ao remover usuário' });
+  } finally {
+    client.release();
   }
 });
 
