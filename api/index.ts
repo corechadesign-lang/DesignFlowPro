@@ -7,9 +7,13 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+const isProduction = process.env.DATABASE_URL?.includes('neon') || 
+                     process.env.DATABASE_URL?.includes('vercel') ||
+                     process.env.VERCEL === '1';
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
+  ssl: isProduction ? { rejectUnauthorized: false } : undefined
 });
 
 const hashPassword = async (password: string): Promise<string> => {

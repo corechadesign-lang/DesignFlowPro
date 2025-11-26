@@ -103,13 +103,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         fetch(`${API_URL}/api/settings`)
       ]);
       
-      setUsers(await usersRes.json());
-      setArtTypes(await artTypesRes.json());
-      setDemands(await demandsRes.json());
-      setWorkSessions(await sessionsRes.json());
-      setFeedbacks(await feedbacksRes.json());
-      setLessons(await lessonsRes.json());
-      setSettings(await settingsRes.json());
+      if (usersRes.ok) setUsers(await usersRes.json());
+      if (artTypesRes.ok) setArtTypes(await artTypesRes.json());
+      if (demandsRes.ok) setDemands(await demandsRes.json());
+      if (sessionsRes.ok) setWorkSessions(await sessionsRes.json());
+      if (feedbacksRes.ok) setFeedbacks(await feedbacksRes.json());
+      if (lessonsRes.ok) setLessons(await lessonsRes.json());
+      if (settingsRes.ok) setSettings(await settingsRes.json());
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -124,7 +124,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (currentUser) {
       fetch(`${API_URL}/api/lesson-progress/${currentUser.id}`)
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : [])
         .then(setLessonProgress)
         .catch(console.error);
     }
