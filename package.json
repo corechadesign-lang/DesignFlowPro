@@ -1,40 +1,27 @@
 {
-  "name": "copy-of-designflow-pro",
+  "name": "designflow-pro",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client:wait\"",
-    "client": "vite",
-    "client:wait": "wait-on http://localhost:3001/api/health && vite",
-    "server": "tsx server/index.ts",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "start": "NODE_ENV=production tsx server/index.ts"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.5",
-    "@types/multer": "^2.0.0",
-    "@types/pg": "^8.15.6",
-    "bcryptjs": "^3.0.3",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
+    "@vercel/node": "^5.5.12",
+    "bcryptjs": "^2.4.3",
     "lucide-react": "^0.554.0",
-    "multer": "^2.0.2",
     "pg": "^8.16.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
-    "recharts": "^3.5.0",
-    "tsx": "^4.20.6",
-    "wait-on": "^9.0.3"
+    "recharts": "^3.5.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.14.0",
+    "@types/pg": "^8.15.6",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
