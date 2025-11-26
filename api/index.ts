@@ -55,6 +55,34 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
   }
 });
 
+app.put('/api/auth/change-password', async (req: Request, res: Response) => {
+  try {
+    const { userId, oldPassword, newPassword } = req.body;
+    
+    if (!userId || !oldPassword || !newPassword) {
+      return res.status(400).json({ error: 'Dados incompletos' });
+    }
+    
+    const result = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    
+    const isValidPassword = await comparePassword(oldPassword, result.rows[0].password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Senha atual incorreta' });
+    }
+    
+    const hashedNewPassword = await hashPassword(newPassword);
+    await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedNewPassword, userId]);
+    
+    return res.json({ success: true, message: 'Senha alterada com sucesso' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({ error: 'Erro ao alterar senha' });
+  }
+});
+
 // ============ USERS ============
 app.get('/api/users', async (req: Request, res: Response) => {
   try {
