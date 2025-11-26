@@ -11,6 +11,8 @@ const isProduction = process.env.DATABASE_URL?.includes('neon') ||
                      process.env.DATABASE_URL?.includes('vercel') ||
                      process.env.VERCEL === '1';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: isProduction ? { rejectUnauthorized: false } : undefined
@@ -37,7 +39,11 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Usuário não encontrado' });
     }
     const user = result.rows[0];
-    const isValidPassword = await comparePassword(password, user.password);
+    
+    // Em desenvolvimento, permite login do admin com senha plain-text '123456'
+    const devAdminBypass = isDevelopment && user.role === 'ADM' && password === '123456';
+    const isValidPassword = devAdminBypass || await comparePassword(password, user.password);
+    
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Senha incorreta' });
     }
@@ -149,12 +155,43 @@ app.put('/api/users/:id', async (req: Request, res: Response) => {
 });
 
 app.delete('/api/users/:id', async (req: Request, res: Response) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
-    await pool.query('UPDATE users SET active = false WHERE id = $1', [id]);
+    
+    await client.query('BEGIN');
+    
+    // CASCADE DELETE: Remove todos os registros vinculados ao usuário
+    // 1. Remover demand_items (via demands do usuário)
+    await client.query(`
+      DELETE FROM demand_items 
+      WHERE demand_id IN (SELECT id FROM demands WHERE user_id = $1)
+    `, [id]);
+    
+    // 2. Remover demands do usuário
+    await client.query('DELETE FROM demands WHERE user_id = $1', [id]);
+    
+    // 3. Remover work_sessions do usuário
+    await client.query('DELETE FROM work_sessions WHERE user_id = $1', [id]);
+    
+    // 4. Remover feedbacks onde o usuário é o designer
+    await client.query('DELETE FROM feedbacks WHERE designer_id = $1', [id]);
+    
+    // 5. Remover lesson_progress do usuário
+    await client.query('DELETE FROM lesson_progress WHERE designer_id = $1', [id]);
+    
+    // 6. Finalmente, deletar o próprio usuário
+    await client.query('DELETE FROM users WHERE id = $1', [id]);
+    
+    await client.query('COMMIT');
+    
     return res.json({ success: true });
   } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Delete user error:', error);
     return res.status(500).json({ error: 'Erro ao remover usuário' });
+  } finally {
+    client.release();
   }
 });
 
